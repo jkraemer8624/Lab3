@@ -38,13 +38,15 @@ void setup() {
   Serial.println(ssid);
   WiFi.begin(ssid, pass);
 
-  if (!aht.begin()) {  // ADDED
+  // Initialize sensor
+  if (!aht.begin()) { 
     Serial.println("Could not find AHT20 sensor.");
     while (1) {
-      delay(10);
+      delay(10); // Delay indefinitly if connection cannot be created
     }
   }
 
+  // Connect to Wifi
   while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print(".");
@@ -56,21 +58,25 @@ void setup() {
 }
 
 void loop() {
+  // We only want to read in defined intervals
   if (millis() - lastRead >= readInterval) {
     lastRead = millis();
 
+    // Read temperature and humidity
     sensors_event_t humEvent, tempEvent;
     aht.getEvent(&humEvent, &tempEvent);
 
     float humidity = humEvent.relative_humidity;
     float temp = tempEvent.temperature;
 
+    // Serial monitor prints sensor values
     Serial.println("~~New read~~");
     Serial.print("Humidity: ");
     Serial.println(humidity, 4);
     Serial.print("Temp: ");
     Serial.println(temp, 4);
 
+    // Create path for get request
     String path = "/?var=";
     path += temp;
     path += "_Celsius";
@@ -89,6 +95,10 @@ void loop() {
         Serial.print("Got status code: ");
         Serial.println(err);
 
+        // Usually you'd check that the response code is 200 or a
+        // similar "success" code (200-299) before carrying on,
+        // but we'll print out whatever response we get
+
         err = http.skipResponseHeaders();
         if (err >= 0) {
           int bodyLen = http.contentLength();
@@ -97,18 +107,23 @@ void loop() {
           Serial.println();
           Serial.println("Body returned follows:");
 
+          // Now we've got to the body, so we can print it out
           unsigned long timeoutStart = millis();
           char c;
           while ((http.connected() || http.available()) &&
                  ((millis() - timeoutStart) < kNetworkTimeout)) {
             if (http.available()) {
               c = http.read();
+              // Print out this character
               Serial.print(c);
 
               bodyLen--;
-
+              
+              // We read something, reset the timeout counter
               timeoutStart = millis();
             } else {
+              // We haven't got any data, so let's pause to allow some to
+              // arrive
               delay(kNetworkDelay);
             }
           }
@@ -126,6 +141,7 @@ void loop() {
       Serial.print("Connect failed: ");
       Serial.println(err);
     }
+    // Stop now that we have tried a download
     http.stop();
   }
 } 
