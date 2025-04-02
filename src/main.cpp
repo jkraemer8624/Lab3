@@ -5,7 +5,7 @@
 #include <Arduino.h>
 
 char ssid[] = "Sigma Apple Pi chapter";         // your network SSID (name) 
-char pass[] = "dontpeeinthepool69";     // your network password
+char pass[] = "****************";     // your network password - removed actual password
 
 // Name of the server we want to connect to
 const char serverAddress[] = "54.177.222.57";
